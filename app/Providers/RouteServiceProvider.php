@@ -22,20 +22,22 @@ class RouteServiceProvider extends ServiceProvider
     /**
      * Define your route model bindings, pattern filters, and other route configuration.
      */
-    public function boot(): void
+   public function boot(): void
     {
         $this->configureRateLimiting();
 
         $this->routes(function () {
-            Route::middleware('api')
-                ->prefix('api')
-                ->group(base_path('routes/api.php'));
+             Route::middleware('api')
+                 ->group(function () {
+                     foreach (glob(base_path('routes/modules/*.php')) as $file) {
+                         require $file;
+                     }
+                 });
 
-            Route::middleware('web')
-                ->group(base_path('routes/web.php'));
+             Route::middleware('web')
+                 ->group(base_path('routes/web.php'));
         });
     }
-
     /**
      * Configure the rate limiters for the application.
      */
