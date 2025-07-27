@@ -2,36 +2,60 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function index() { return Product::all(); }
+    // GET /products
+    public function index()
+    {
+        return response()->json(Product::all(), 200);
+    }
 
+    // GET /products/{id}
+    public function show($id)
+    {
+        $product = Product::findOrFail($id);
+        return response()->json($product, 200);
+    }
+
+    // POST /products
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'name' => 'required|string',
-            'sku' => 'required|string|unique:products',
-            'quantity' => 'required|integer|min:0',
-            'price' => 'required|numeric|min:0',
+        $validated = $request->validate([
+            'name'        => 'required|string|max:255',
+            'sku'         => 'required|string|unique:products,sku',
+            'description' => 'nullable|string',
+            'price'       => 'required|numeric|min:0',
+            'stock'       => 'required|integer|min:0',
         ]);
-        return Product::create($data);
+
+        $product = Product::create($validated);
+        return response()->json($product, 201);
     }
 
-    public function show(Product $product) { return $product; }
-
-    public function update(Request $request, Product $product)
+    // PUT /products/{id}
+    public function update(Request $request, $id)
     {
-        $product->update($request->validated());
-        return $product;
+        $product = Product::findOrFail($id);
+
+        $validated = $request->validate([
+            'name'        => 'sometimes|required|string|max:255',
+            'sku'         => "sometimes|required|string|unique:products,sku,{$id}",
+            'description' => 'nullable|string',
+            'price'       => 'sometimes|required|numeric|min:0',
+            'stock'       => 'sometimes|required|integer|min:0',
+        ]);
+
+        $product->update($validated);
+        return response()->json($product, 200);
     }
 
-    public function destroy(Product $product)
+    // DELETE /products/{id}
+    public function destroy($id)
     {
-        $product->delete();
-        return response()->noContent();
+        Product::findOrFail($id)->delete();
+        return response()->json(null, 204);
     }
 }
